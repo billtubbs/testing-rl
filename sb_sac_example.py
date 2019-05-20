@@ -7,6 +7,11 @@ from stable_baselines.sac.policies import MlpPolicy
 from stable_baselines.common.vec_env import DummyVecEnv
 from stable_baselines import SAC
 
+# I had a problem with my Mac OS X environment which required
+# this fix (see here: https://github.com/dmlc/xgboost/issues/1715)
+# Delete if you don't have this problem:
+os.environ['KMP_DUPLICATE_LIB_OK'] = 'True'
+
 env_name = 'CartPole-BT-vH-v0'
 env = gym.make(env_name)
 env = DummyVecEnv([lambda: env])
@@ -19,10 +24,12 @@ if os.path.isfile(filename):
 else:
     model = SAC(MlpPolicy, env, verbose=1)
 
+# Train model
 model.learn(total_timesteps=50000, log_interval=10)
 model.save(filename)
 print(f"Model saved to file '{filename}'")
 
+# Display animated runs with trained model
 obs = env.reset()
 while True:
     action, _states = model.predict(obs)
