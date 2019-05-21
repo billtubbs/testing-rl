@@ -1,9 +1,8 @@
-from abc import ABC, abstractmethod
 import numpy as np
 import control
 from gym_CartPole_BT.systems import cartpend
 
-class LQR(ABC):
+class LQR:
     """
     Linear quadratic Regulator (LQR) for use with Open AI Gym environments.
 
@@ -24,7 +23,7 @@ class LQR(ABC):
     """
 
     def __init__(self, policy, env, gain=None, verbose=0, *,
-                 requires_vec_env, policy_base, policy_kwargs=None):
+                 requires_vec_env=False, policy_base=None, policy_kwargs=None):
         self.policy = policy
         self.env = env
         self.verbose = verbose
@@ -67,13 +66,6 @@ class LQR(ABC):
             "space as this controller."
 
         self.env = env
-
-    @abstractmethod
-    def setup_model(self):
-        """
-        Create the LQR based on the system dynamic model.
-        """
-        pass
 
     def predict(self, observation, state=None, mask=None, deterministic=True):
 
