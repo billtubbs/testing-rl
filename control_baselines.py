@@ -10,7 +10,7 @@ class LQR:
     control engineering applications.
 
     LQR works well when the system dynamics can be described by a set of
-    linear differential equations around a fixed point and the cost is a
+    ordinary differential equations around a fixed point and the cost is a
     quadratic function of the state.
 
     :param policy: (None) included for compatibility only.
@@ -38,9 +38,11 @@ class LQR:
                 env.observation_space.shape[0]
             )
             if gain is None:
-                gain = np.zeros(gain_matrix_shape)
+                gain = np.zeros(gain_matrix_shape, dtype=float)
             else:
-                assert gain.shape == gain_matrix_shape
+                gain = np.array(gain, dtype=float)
+                assert gain.shape == gain_matrix_shape, "Gain matrix for " \
+                    f"this environment should be shape {gain_matrix_shape}."
         self.gain = gain  # Gain matrix
         self.u = np.zeros(env.action_space.shape)  # Control vector
 
