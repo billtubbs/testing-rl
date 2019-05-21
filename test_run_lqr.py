@@ -3,7 +3,7 @@ import gym_CartPole_BT
 import numpy as np
 
 # Create and initialize environment
-env = gym.make('CartPole-BT-dH-v0')
+env = gym.make('CartPole-BT-m2-dL-v0')
 env.reset()
 
 # Control vector (shape (1, ) in this case)
@@ -19,6 +19,7 @@ print(f"{'k':>3s}  {'u':>5s} {'reward':>6s} {'cum_reward':>10s}")
 print("-"*28)
 
 # Gain matrix (K) for optimal control
+# (Calculated using lqr function with Q=np.eye(4), and R=0.0001)
 gain = np.array([-100.00,   -197.54,   1491.28,    668.44])
 
 # Run one episode
@@ -30,7 +31,7 @@ while not done:
 
     # Linear quadratic regulator
     # u[t] = -Ky[t]
-    u[0] = -np.dot(gain, env.state - env.goal_state)
+    u[:] = -np.dot(gain, env.state - env.goal_state)
 
     # Run simulation one time-step
     observation, reward, done, info = env.step(u)
