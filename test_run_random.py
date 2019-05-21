@@ -102,17 +102,16 @@ top_results = top_results.reset_index(drop=True).head(top_n)
 print(f"Top {top_n} results after {n_iter} episodes:\n"
       f"{top_results[['cum_reward']].round(2)}")
 
-top_gains = np.vstack(top_results['gain'].values)
-mean_gain = np.mean(top_gains, axis=0)
-std_gain = top_gains.std(axis=0)
+best_gain = top_results.loc[0, 'gain']
+std_gain = np.vstack(top_results['gain'].values).std(axis=0)
 
-df = pd.DataFrame({'Mean': mean_gain, 'Std.': std_gain})
-print(f"Mean gain values and std. dev:\n{df.round(2)}")
+df = pd.DataFrame({'Best': best_gain, 'Std.': std_gain})
+print(f"Best gain values and std. dev:\n{df.round(3)}")
 
 print(f"\nStarting targetted search for {n_iter} episodes...")
 # Now search within reduced area
 for i in range(n_iter):
-    gain = np.random.normal(mean_gain, std_gain)
+    gain = np.random.normal(best_gain, std_gain)
     agent = ControllerLQR(gain)
     # Average of two runs
     cum_reward = run_episode(env, agent, render=False, show=False)
