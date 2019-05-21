@@ -1,11 +1,12 @@
-import gym
-import gym_CartPole_BT
 import numpy as np
 import pandas as pd
+import gym
+import gym_CartPole_BT
+from control_baselines import LQR
 
-def run_episode(env, agent, render=True, show=True):
+def run_episode(env, model, render=True, show=True):
 
-    env.reset()
+    obs = env.reset()
 
     if render:
         # Open graphics window and draw animation
@@ -23,14 +24,11 @@ def run_episode(env, agent, render=True, show=True):
     done = False
     while not done:
 
-        # Retrieve the system state
-        x, x_dot, theta, theta_dot = env.state
-
-        # Linear quadratic regulator
-        u = agent.action(env)
+        # Determine control input
+        u, _ = model.predict(obs)
 
         # Run simulation one time-step
-        observation, reward, done, info = env.step(u)
+        obs, reward, done, info = env.step(u)
 
         if render:
             # Update the animation
@@ -47,26 +45,12 @@ def run_episode(env, agent, render=True, show=True):
     return cum_reward
 
 
-class ControllerLQR:
-    """Linear quadratic regulator"""
-
-    def __init__(self, gain):
-
-        self.gain = gain
-        self.u = np.zeros(1)
-
-    def action(self, env):
-
-        # Control vector (shape (1, ) in this case)
-        self.u[0] = -np.dot(self.gain, env.state - env.goal_state)
-
-        return self.u
-
-
 # Create and initialize environment
 env_name = 'CartPole-BT-dL-vL-v0'
 print(f"\nInitializing environment '{env_name}'...")
 env = gym.make(env_name)
+
+model = LQR(None, env)
 
 # Use random search to find the best linear controller:
 # u[t] = -Ky[t]
@@ -91,9 +75,9 @@ except:
 print(f"\nStarting random search for {n_iter} episodes...")
 results = []
 for i in range(n_iter):
-    gain = (np.random.random(size=4) - 0.5)*search_size
-    agent = ControllerLQR(gain)
-    cum_reward = run_episode(env, agent, render=False, show=False)
+    gain = (np.random.random(size=(1, 4)) - 0.5)*search_size
+    model = LQR(None, env, gain)
+    cum_reward = run_episode(env, model, render=False, show=False)
     results.append((cum_reward, gain))
 
 top_results = pd.DataFrame(results, columns=['cum_reward', 'gain'])
@@ -105,16 +89,15 @@ print(f"Top {top_n} results after {n_iter} episodes:\n"
 best_gain = top_results.loc[0, 'gain']
 std_gain = np.vstack(top_results['gain'].values).std(axis=0)
 
-df = pd.DataFrame({'Best': best_gain, 'Std.': std_gain})
+df = pd.DataFrame({'Best': best_gain.ravel(), 'Std.': std_gain})
 print(f"Best gain values and std. dev:\n{df.round(3)}")
 
 print(f"\nStarting targetted search for {n_iter} episodes...")
 # Now search within reduced area
 for i in range(n_iter):
     gain = np.random.normal(best_gain, std_gain)
-    agent = ControllerLQR(gain)
-    # Average of two runs
-    cum_reward = run_episode(env, agent, render=False, show=False)
+    model = LQR(None, env, gain)
+    cum_reward = run_episode(env, model, render=False, show=False)
     #print(f"{i}: Cum reward: {cum_reward}")
     results.append((cum_reward, gain))
 
@@ -128,10 +111,10 @@ print(f"\nStarting robustness checks on top {top_n} results...")
 results = []
 # Do a robustness check on top results:
 for gain in top_results['gain']:
-    agent = ControllerLQR(gain)
+    model = LQR(None, env, gain)
     # Average over 3 runs
     mean_reward = np.mean([
-        run_episode(env, agent, render=False, show=False)
+        run_episode(env, model, render=False, show=False)
         for _ in range(3)
     ])
     results.append(mean_reward)
@@ -145,9 +128,15 @@ print(f" Gain: {best_gain.round(3)}")
 
 input("\nPress enter to start simulation...")
 
-agent.gain = best_gain
-cum_reward = run_episode(env, agent, render=True, show=False)
-print(f"Reward: {round(cum_reward, 2)}")
+model.gain = best_gain
+
+# Run repeated simulations with animation
+while True:
+    cum_reward = run_episode(env, model, render=True, show=False)
+    print(f"Reward: {round(cum_reward, 2)}")
+    s = input("Press enter to run again, 'q' to quit: ")
+    if s.lower() == 'q':
+        break
 
 # Close animation window
 env.viewer.close()
