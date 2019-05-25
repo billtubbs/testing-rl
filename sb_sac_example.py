@@ -34,7 +34,7 @@ else:
     model = SAC(MlpPolicy, env, verbose=1)
 
 # Train model
-model.learn(total_timesteps=100, log_interval=10)
+model.learn(total_timesteps=50000, log_interval=10)
 model.save(filename)
 if args.show:
     print(f"Model saved to file '{filename}'")
@@ -46,7 +46,7 @@ if args.show:
     while True:
         action, _states = model.predict(obs)
         obs, reward, done, info = env.step(action)
-        cum_reward += reward
+        cum_reward += float(reward)
         if args.render:
             env.render()
         if done:
