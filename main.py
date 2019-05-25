@@ -10,17 +10,31 @@ import gym
 import tensorflow as tf
 from tensorflow.python.client import device_lib
 
-from stable_baselines.ddpg.policies import MlpPolicy
-from stable_baselines.common.vec_env.dummy_vec_env import DummyVecEnv
-from stable_baselines.bench import Monitor
-from stable_baselines.results_plotter import load_results, ts2xy
-from stable_baselines import DDPG
-from stable_baselines.ddpg.noise import AdaptiveParamNoiseSpec
-
 from parsers import parser
 
 # Parse input arguments with parsers module
 args = parser.parse_args()
+
+if args.model == 'PPO2':
+    from stable_baselines import PPO2
+    from stable_baselines.common.policies import MlpPolicy
+    MODEL_CLASS = PPO2
+elif args.model == 'SAC':
+    from stable_baselines import SAC
+    from stable_baselines.common.policies import MlpPolicy
+    MODEL_CLASS = SAC
+elif args.model == 'DDPG':
+    from stable_baselines import DDPG
+    from stable_baselines.ddpg.policies import MlpPolicy
+    from stable_baselines.ddpg.noise import AdaptiveParamNoiseSpec
+    MODEL_CLASS = DDPG
+else:
+    raise ValueError(f"Model '{args.model}' not recognized.")
+
+# Common packages
+from stable_baselines.common.vec_env.dummy_vec_env import DummyVecEnv
+from stable_baselines.bench import Monitor
+from stable_baselines.results_plotter import load_results, ts2xy
 
 # Add additional parameters
 args.start_time = time.strftime('%Y-%m-%d %H:%M:%S')
@@ -63,6 +77,8 @@ if args.log_dir is not None:
         raise FileExistsError("There are existing files in '" + args.log_dir +
                               "'. Use --overwrite argument to over-write them.")
 
+best_mean_reward, n_steps = -np.inf, 0
+
 def callback(_locals, _globals):
     """
     Callback called at each step (for DQN an others) or after n steps
@@ -84,12 +100,13 @@ def callback(_locals, _globals):
             # New best model, you could save the agent here
             if mean_reward > best_mean_reward:
                 best_mean_reward = mean_reward
-                # Example for saving best model
-                print("Saving new best model")
-                _locals['self'].save(args.log_dir + 'best_model.pkl')
+                # Save the best model
+                if args.save_model:
+                    model_file_path = os.path.join(args.log_dir,
+                                                   'best_model.pkl')
+                    _locals['self'].save(model_file_path)
     n_steps += 1
     return True
-
 
 def main():
 
@@ -100,17 +117,25 @@ def main():
 
     # Create and wrap the environment
     env = gym.make(args.env)
-    env = Monitor(env, log_dir, allow_early_resets=True)
+    env = Monitor(env, args.log_dir, allow_early_resets=True)
     env = DummyVecEnv([lambda: env])
 
     # Add some param noise for exploration
     param_noise = AdaptiveParamNoiseSpec(initial_stddev=0.2,
                                          desired_action_stddev=0.2)
-    model = DDPG(MlpPolicy, env, param_noise=param_noise,
-                 memory_limit=int(1e6), verbose=0)
+
+    model = MODEL_CLASS(MlpPolicy, env, param_noise=param_noise,
+                        memory_limit=int(1e6), verbose=0)
 
     # Train the agent
     model.learn(total_timesteps=args.n_steps, callback=callback)
+
+    # Save the final model
+    if args.save_model:
+        model_file_path = os.path.join(args.log_dir,
+                                       'model.pkl')
+        model.save(model_file_path)
+        print("Best and final models saved in ", os.path.abspath(args.log_dir))
 
     if args.plots:
         raise NotImplementedError

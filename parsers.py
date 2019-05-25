@@ -23,8 +23,8 @@ parser.add_argument('--reset-timesteps', action='store_true', default=False,
                     "number (used in logging).")
 parser.add_argument('--log-interval', type=int, default=10, metavar='N',
                     help="Number of timesteps before logging (default: 10)")
-parser.add_argument('--log_dir', type=str, default='.',
-                    help="directory for outputting log files. (Default: '.')")
+parser.add_argument('--log_dir', type=str, default='./',
+                    help="directory for outputting log files. (Default: './')")
 parser.add_argument('--save-model', action='store_true', default=False,
                     help="save model after each epoch. If no log directory "
                          "is provided, saves to the current directory.")
