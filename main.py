@@ -7,6 +7,14 @@ import numpy as np
 import yaml
 import gym
 
+# Need this to suppress warnings from OpenMP
+os.environ['KMP_WARNINGS'] = 'off'
+
+# Need this to supress tensorflow warnings like
+# WARNING:tensorflow:F ... to_int32 (from tensorflow.python.ops.math_ops)
+# is deprecated and will be removed in a future version.
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
+
 import tensorflow as tf
 from tensorflow.python.client import device_lib
 
@@ -70,15 +78,16 @@ random.seed(args.seed)
 np.random.seed(args.seed)
 
 # Record git hash, so we know what the code looked like when this ran
-args.git_hash = subprocess.check_output(['git', 'rev-parse', '--short', 'HEAD']).strip().decode()
+#TODO: move this to the shell script
+#args.git_hash = subprocess.check_output(['git', 'rev-parse', '--short', #'HEAD']).strip().decode()
 
 # Create log dir
 if args.log_dir is not None:
     os.makedirs(args.log_dir, exist_ok=True)
 
     if args.overwrite is False and len(os.listdir(args.log_dir)) > 1:
-        raise FileExistsError("There are existing files in '" + args.log_dir +
-                              "'. Use --overwrite argument to over-write them.")
+        raise FileExistsError(f"There are existing files in '{args.log_dir}'. "
+                               "Use --overwrite argument to over-write them.")
 
 best_mean_reward, n_steps = -np.inf, 0
 
@@ -127,11 +136,15 @@ def main():
     if args.model == 'DDPG':
         param_noise = AdaptiveParamNoiseSpec(initial_stddev=0.2,
                                              desired_action_stddev=0.2)
+        model = MODEL_CLASS(MlpPolicy, env, param_noise=param_noise,
+                            memory_limit=int(1e6), verbose=0)
+    if args.model == 'SAC':
+        # TODO: This doesn't work
+        model = MODEL_CLASS(MlpPolicy, env, verbose=1,
+                            policy_kwargs={'n_env': 1, 'n_steps': 64,
+                                           'n_batch': 64})
     else:
-        param_noise = None
-
-    model = MODEL_CLASS(MlpPolicy, env, param_noise=param_noise,
-                        memory_limit=int(1e6), verbose=0)
+        model = MODEL_CLASS(MlpPolicy, env, verbose=0)
 
     # Train the agent
     model.learn(total_timesteps=args.n_steps, callback=callback)
