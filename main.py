@@ -15,6 +15,9 @@ from parsers import parser
 # Parse input arguments with parsers module
 args = parser.parse_args()
 
+if args.env.startswith('CartPole-BT'):
+    import gym_CartPole_BT
+
 if args.model == 'PPO2':
     from stable_baselines import PPO2
     from stable_baselines.common.policies import MlpPolicy
@@ -121,8 +124,11 @@ def main():
     env = DummyVecEnv([lambda: env])
 
     # Add some param noise for exploration
-    param_noise = AdaptiveParamNoiseSpec(initial_stddev=0.2,
-                                         desired_action_stddev=0.2)
+    if args.model == 'DDPG':
+        param_noise = AdaptiveParamNoiseSpec(initial_stddev=0.2,
+                                             desired_action_stddev=0.2)
+    else:
+        param_noise = None
 
     model = MODEL_CLASS(MlpPolicy, env, param_noise=param_noise,
                         memory_limit=int(1e6), verbose=0)
