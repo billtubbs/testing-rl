@@ -14,9 +14,10 @@
 # To automate the execution of multiple scipts use the
 # jobdispatcher.py tool.
 
-# Launch the Python executables from parent directory
-cp main.py ../main.py
-cp parsers.py ../parsers.py
+# The Python executables will be launched from the parent
+# directory of job-dispatcher.  To be safe, use absolute path
+cp ~/code/openai/testing-rl/main.py ../main.py
+cp ~/code/openai/testing-rl/parsers.py ../parsers.py
 
 MODEL='DDPG'
 ENVIRONMENT='LunarLanderContinuous-v2'
