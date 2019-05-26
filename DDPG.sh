@@ -29,7 +29,6 @@ BASELOG='../logs/'$ENVIRONMENT/$MODEL  # Use the env and model names
 LOGDIR=$BASELOG/$TIMESTAMP
 #SCRATCH='/data/scratch/'$TIMESTAMP
 
-mkdir -p $DATADIR
 #mkdir -p $SCRATCH
 mkdir -p $BASELOG
 mkdir -p $LOGDIR
