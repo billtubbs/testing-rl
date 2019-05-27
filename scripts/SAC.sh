@@ -16,22 +16,25 @@
 
 # The Python executables will be launched from the parent
 # directory of job-dispatcher.  To be safe, use absolute path
-cp ~/code/openai/testing-rl/main.py ../main.py
-cp ~/code/openai/testing-rl/parsers.py ../parsers.py
+cp ~/code/openai/testing-rl/main.py ~/code/main.py
+cp ~/code/openai/testing-rl/parsers.py ~/code/parsers.py
 
-MODEL='DDPG'
+MODEL='SAC'
 ENVIRONMENT='CartPole-BT-dL-v0'
 
 # Setup
 TIMESTAMP=`date +%y%m%d%H%M%S`  # Use this in LOGDIR (optional)
-FILENAME=`basename "$0"`  # Use this in --label (optional)
-BASELOG='../logs/'$ENVIRONMENT/$MODEL  # Use the env and model names
+FILENAME=`basename "$0"`  # Use this in --name (optional)
+BASELOG='../../experiments/logs/'$ENVIRONMENT/$MODEL  # Use the env and model names
 LOGDIR=$BASELOG/$TIMESTAMP
-#SCRATCH='/data/scratch/'$TIMESTAMP
+#SCRATCH='../../experiments/logs/scratch/'$TIMESTAMP
 
 #mkdir -p $SCRATCH
 mkdir -p $BASELOG
 mkdir -p $LOGDIR
+
+# Save a copy of this script
+cp `basename "$0"` $LOGDIR/`basename "$0"`
 
 #ln -s $SCRATCH $LOGDIR
 
