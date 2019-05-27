@@ -21,7 +21,7 @@ parser.add_argument('--seed', type=int, default=None, metavar='S',
 parser.add_argument('--reset-timesteps', action='store_true', default=False,
                     help="Whether or not to reset the current timestep "
                     "number (used in logging).")
-parser.add_argument('--log-interval', type=int, default=10, metavar='N',
+parser.add_argument('--log-interval', type=int, default=10, metavar='LOGINT',
                     help="Number of timesteps before logging (default: 10)")
 parser.add_argument('--log_dir', type=str, default='./',
                     help="directory for outputting log files. (Default: './')")
