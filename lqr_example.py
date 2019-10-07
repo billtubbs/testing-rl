@@ -4,13 +4,13 @@ import gym_CartPole_BT
 from control_baselines import LQRCartPend
 
 # Parse any arguments provided at the command-line
-parser = argparse.ArgumentParser(description='Test this gym environment.')
+parser = argparse.ArgumentParser(description='Test the gym environment.')
 parser.add_argument('-e', '--env', type=str, default='CartPole-BT-dL-v0',
                     help="gym environment")
-parser.add_argument('-s', "--show", help="display output",
-                    action="store_true")
-parser.add_argument('-r', "--render", help="render animation",
-                    action="store_true")
+parser.add_argument('-s', '--show', type=bool, default=True,
+                    action="store_true", help="display output")
+parser.add_argument('-r', '--render', type=bool,
+                    action="store_true", help="render animation")
 args = parser.parse_args()
 
 # Create and initialize environment

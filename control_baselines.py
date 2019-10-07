@@ -2,6 +2,7 @@ import numpy as np
 import control
 from gym_CartPole_BT.systems import cartpend
 
+
 class LQR:
     """
     Linear quadratic Regulator (LQR) for use with Open AI Gym environments.
