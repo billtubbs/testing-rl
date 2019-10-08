@@ -7,9 +7,9 @@ from control_baselines import LQRCartPend
 parser = argparse.ArgumentParser(description='Test the gym environment.')
 parser.add_argument('-e', '--env', type=str, default='CartPole-BT-dL-v0',
                     help="gym environment")
-parser.add_argument('-s', '--show', type=bool, default=True,
+parser.add_argument('-s', '--show',
                     action="store_true", help="display output")
-parser.add_argument('-r', '--render', type=bool,
+parser.add_argument('-r', '--render',
                     action="store_true", help="render animation")
 args = parser.parse_args()
 
@@ -19,6 +19,9 @@ if args.show:
 env = gym.make(args.env)
 
 model = LQRCartPend(None, env, verbose=1)
+
+# Open graphics window and draw animation
+if args.render: env.render()
 
 if args.show:
     # Display animated runs with model
