@@ -101,7 +101,7 @@ model = LQR(None, env, theta)
 results_dir = 'results'
 if not os.path.exists(results_dir):
     os.makedirs(results_dir)
-sub_dir = args.model
+sub_dir = args.env
 if not os.path.exists(os.path.join(results_dir, sub_dir)):
     os.makedirs(os.path.join(results_dir, sub_dir))
 filename = 'param_sweep_results.csv'
