@@ -67,7 +67,8 @@ env.reset()
 # Use random search to find the best linear controller:
 # u[t] = -Ky[t]
 
-# BRS parameters
+# Basic Random Search (BRS) parameters
+# See Mania et al. 2018.
 alpha = 0.25  # Step size
 n_samples = 20  # Number of directions sampled per iteration
 noise_sd = 3  # standard deviation of the exploration noise
@@ -78,19 +79,21 @@ theta = np.zeros((1, n_params))
 model = LQR(None, env, theta)
 episode_count = 0
 
-# Do initial random search
+# Do an initial random search (this is not part of standard BRS)
 print("Initial random search of parameter-space...")
 cum_rewards = []
 params = []
 for i in range(n_samples):
-    model.gain[:] = np.random.normal(scale=noise_sd, size=n_params)
+    model.gain[:] = np.random.normal(scale=noise_sd*5, size=n_params)
     cum_reward = run_episode(env, model, render=False, show=False)
     episode_count += 1
-    params.append(model.gain)
+    params.append(model.gain.copy())
     cum_rewards.append(cum_reward)
 best = np.argmax(cum_rewards)
 best_params = params[best]
 theta = np.array(best_params)
+
+
 
 headings = f"{'j':>3s} {'ep.':>5s} {'theta':>32s} {'Reward':>8s}"
 headings += '\n' + '-'*len(headings)
