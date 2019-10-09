@@ -61,6 +61,16 @@ def run_episode(env, model, render=True, show=True):
     return cum_reward
 
 
+def run_episodes(env, model, n_repeats=1, render=True, show=True):
+
+    cum_rewards = []
+    for _ in range(n_repeats):
+        cum_reward = run_episode(env, model, render=render, show=show)
+        cum_rewards.append(cum_reward)
+
+    return np.array(cum_rewards).mean()
+
+
 # Create and initialize environment
 if args.show: print(f"\nInitializing environment '{args.env}'...")
 env = gym.make(args.env)
@@ -70,6 +80,7 @@ env.reset()
 # u[t] = -Ky[t]
 
 # Search parameters
+n_repeats = 3  # Number of episodes (roll-outs) to average over
 n_samples = 20  # Number of directions sampled per iteration
 n_params = 4  # Number of parameters to search for
 
@@ -101,7 +112,7 @@ model = LQR(None, env, theta)
 results_dir = 'results'
 if not os.path.exists(results_dir):
     os.makedirs(results_dir)
-sub_dir = args.model
+sub_dir = args.env
 if not os.path.exists(os.path.join(results_dir, sub_dir)):
     os.makedirs(os.path.join(results_dir, sub_dir))
 filename = 'param_sweep_results.csv'
@@ -119,7 +130,8 @@ with open(filepath, 'w') as f:
     for i, idx in enumerate(np.ndindex(results.shape)):
         theta = [values[i] for i, values in zip(idx, param_values)]
         model.gain[:] = theta
-        cum_reward = run_episode(env, model, render=False, show=False)
+        cum_reward = run_episodes(env, model, n_repeats=n_repeats, 
+                                  render=False, show=False)
         results[idx] = cum_reward
 
         # Write results to file
