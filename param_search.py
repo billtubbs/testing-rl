@@ -144,9 +144,8 @@ with open(filepath, 'w') as f:
 
     heading1 = f"{'i':>5s} {'idx':>16s} {'theta':>32s} {'Reward':>8s}"
     heading2 = '-'*len(heading1)
-    if args.show:
-        print_and_log(heading1)
-        print_and_log(heading2)
+    print_and_log(heading1)
+    print_and_log(heading2)
 
     for i, idx in enumerate(np.ndindex(results.shape)):
         theta = [values[i] for i, values in zip(idx, param_values)]
@@ -159,9 +158,8 @@ with open(filepath, 'w') as f:
         csv_writer.writerow(theta + [cum_reward])
 
         # Print update to std. output
-        if args.show:
-            print_and_log(f"{i:5d} {str(idx):>16s} "
-                f"{str(np.round(theta, 2)):>32s} {cum_reward:8.1f}")
+        print_and_log(f"{i:5d} {str(idx):>16s} "
+                      f"{str(np.round(theta, 2)):>32s} {cum_reward:8.1f}")
 
 max_reward = results.max()
 idx_max = np.unravel_index(np.argmax(results, axis=None), results.shape)
