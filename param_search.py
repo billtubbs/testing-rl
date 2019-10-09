@@ -9,7 +9,7 @@ from control_baselines import LQR
 
 # Parse any arguments provided at the command-line
 parser = argparse.ArgumentParser(description='Test this gym environment.')
-parser.add_argument('-e', '--env', type=str, default='CartPole-BT-dL-v0',
+parser.add_argument('-e', '--env', type=str, default='CartPole-BT-v0',
                     help="gym environment")
 parser.add_argument('-s', "--show", help="display output",
                     action="store_true")
@@ -101,8 +101,11 @@ model = LQR(None, env, theta)
 results_dir = 'results'
 if not os.path.exists(results_dir):
     os.makedirs(results_dir)
+sub_dir = args.model
+if not os.path.exists(os.path.join(results_dir, sub_dir)):
+    os.makedirs(os.path.join(results_dir, sub_dir))
 filename = 'param_sweep_results.csv'
-filepath = os.path.join(results_dir, filename)
+filepath = os.path.join(results_dir, sub_dir, filename)
 
 with open(filepath, 'w') as f:
 
