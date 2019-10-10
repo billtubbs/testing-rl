@@ -10,7 +10,7 @@ from control_baselines import LQR
 
 # Parse any arguments provided at the command-line
 parser = argparse.ArgumentParser(description='Test this gym environment.')
-parser.add_argument('-e', '--env', type=str, default='CartPole-BT-vH-v0',
+parser.add_argument('-e', '--env', type=str, default='CartPole-BT-vL-v0',
                     help="gym environment")
 parser.add_argument('-s', "--show", help="display output to std output (screen).",
                     action="store_true")
