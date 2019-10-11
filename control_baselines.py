@@ -1,3 +1,4 @@
+import logging
 import numpy as np
 import control
 from gym_CartPole_BT.systems import cartpend
@@ -77,6 +78,7 @@ class LQR:
 
         return self.u, None
 
+
 class LQRCartPend(LQR):
 
     def __init__(self, policy, env, gain=None, verbose=0,
@@ -123,3 +125,70 @@ class LQRCartPend(LQR):
 
         # Set gain matrix
         self.gain[:] = K
+
+
+class BasicRandomSearch:
+    """Basic random search algorithm.
+
+    A primitive form of random search which simply computes a finite 
+    difference approximation along the random direction and then takes
+    a step along this direction without using a line search.
+
+    Refer to Mania et al. (2018) for details.
+    """
+
+    def __init__(self, policy_params, rollout_func, step_size=0.1, 
+                 n_samples=10, noise_sd=1, rng=None):
+        """
+        Args:
+            policy_params (np.ndarray): 1-d array containing initial
+                values of the model parameters (can be zeros).
+            rollout_func (function): Function that runs one roll-out in
+                the environment.
+            step_size (float): step-size (alpha).
+            n_samples (int): Random search sample size (N).
+            noise_sd (float): Standard deviation of the exploration noise
+                (mu).
+            rng (np.random.RandomState): Initialized random number generator.
+        """
+
+        self.theta = np.array(policy_params)
+        assert len(self.theta.shape) == 1
+        self.n_params = self.theta.shape[0]
+        self.rollout = rollout_func
+        self.step_size = step_size
+        self.n_samples = n_samples
+        self.noise_sd = noise_sd
+        if rng is None:
+            rng = np.random.RandomState()
+        self.rng = rng
+        self.rollout_count = 0
+    
+    def search(self, n_iter=1):
+
+        for _ in range(n_iter):
+            
+            # Sample random directions from standard normal distribution
+            delta_values = self.rng.randn(self.n_samples*self.n_params)\
+                           .reshape((self.n_samples, self.n_params))
+            cum_rewards = {'+': [], '-': []}
+            
+            # Run rollouts in each random direction
+            for delta in delta_values:
+                param_vector = self.theta + delta*self.noise_sd
+                cum_reward = self.rollout(param_vector)
+                self.rollout_count += 1
+                cum_rewards['+'].append(cum_reward)
+                param_vector = self.theta - delta*self.noise_sd
+                cum_reward = self.rollout(param_vector)
+                self.rollout_count += 1
+                cum_rewards['-'].append(cum_reward)
+
+            # Compute the finite difference approximation along the
+            # random direction and update model parameters
+            cum_rewards = {k: np.array(v) for k, v in cum_rewards.items()}
+            dr = cum_rewards['+'] - cum_rewards['-']
+            dr_dtheta = dr.reshape((self.n_samples, 1)) * delta_values     
+            self.theta = self.theta + (self.step_size * dr_dtheta.sum(axis=0) / 
+                                       self.n_samples)
+

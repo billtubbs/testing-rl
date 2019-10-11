@@ -4,13 +4,13 @@ import numpy as np
 import pandas as pd
 import gym
 import gym_CartPole_BT
-from control_baselines import LQR
+from control_baselines import LQR, BasicRandomSearch
 
 # Parse any arguments provided at the command-line
 parser = argparse.ArgumentParser(description='Test this gym environment.')
 parser.add_argument('-e', '--env', type=str, default='CartPole-BT-vL-v0',
                     help="gym environment")
-parser.add_argument('-s', "--show", help="display output",
+parser.add_argument('-d', "--show", help="display output",
                     action="store_true")
 parser.add_argument('-l', "--log", help="log output to logfile.",
                     action="store_true")
@@ -18,7 +18,9 @@ parser.add_argument('-r', "--render", help="render animation",
                     action="store_true")
 parser.add_argument('-v', "--verbose", help="increase output verbosity",
                     action="store_true")
-parser.add_argument('-n', '--n-repeats', type=int, default=5,
+parser.add_argument('-s', '--seed', type=int, default=None,
+                    help="Random to seed.  Initializes random number generator.")
+parser.add_argument('-n', '--n-repeats', type=int, default=3,
                     help="Number of episodes (roll-outs) to average over.")
 parser.add_argument('-t', '--n-samples', type=int, default=20,
                     help="Number of directions sampled per iteration.")
@@ -91,6 +93,9 @@ def print_and_log(message):
         logging.info(message)
 
 
+# Initialize random number generator
+rng = np.random.RandomState(args.seed)
+
 # Create and initialize environment
 print_and_log(f"Initializing environment '{args.env}'...")
 env = gym.make(args.env)
@@ -114,20 +119,22 @@ theta = np.zeros((1, n_params))
 model = LQR(None, env, theta)
 episode_count = 0
 
-# Do an initial random search (this is not part of standard BRS)
-print_and_log("Initial random search of parameter-space...")
-cum_rewards = []
-params = []
-for i in range(args.n_samples):
-    model.gain[:] = np.random.normal(scale=args.noise_sd*5, size=n_params)
-    cum_reward = run_episodes(env, model, n_repeats=args.n_repeats, 
-                              render=False, show=False)
-    episode_count += 1
-    params.append(model.gain.copy())
-    cum_rewards.append(cum_reward)
-best = np.argmax(cum_rewards)
-best_params = params[best]
-theta = np.array(best_params)
+# # Do an initial random search (this is not part of standard BRS)
+# # NOTE: THIS IS NOT PART OF THE STANDARD BRS ALGORITH
+# print_and_log("Initial random search of parameter-space...")
+# cum_rewards = []
+# params = []
+# for i in range(args.n_samples):
+#     model.gain[:] = np.random.normal(scale=args.noise_sd*5, size=n_params)
+#     cum_reward = run_episodes(env, model, n_repeats=args.n_repeats, 
+#                               render=False, show=False)
+#     episode_count += 1
+#     params.append(model.gain.copy())
+#     cum_rewards.append(cum_reward)
+# best = np.argmax(cum_rewards)
+# best_params = params[best]
+# theta = np.array(best_params)
+theta = np.zeros((1, n_params))
 
 heading1 = f"{'j':>3s} {'ep.':>5s} {'theta':>32s} {'Reward':>8s}"
 heading2 = '-'*len(heading1)
@@ -140,7 +147,7 @@ done = False
 while not done:
 
     # Sample from standard normal distribution
-    delta_values = np.random.randn(args.n_samples*n_params)\
+    delta_values = rng.randn(args.n_samples*n_params)\
                    .reshape((args.n_samples, n_params))
     cum_rewards = {'+': [], '-': []}
     for delta in delta_values:
