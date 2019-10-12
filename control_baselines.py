@@ -168,12 +168,12 @@ class BasicRandomSearch:
 
         for _ in range(n_iter):
             
-            # Sample random directions from standard normal distribution
+            # Sample n random directions from standard normal distribution
             delta_values = self.rng.randn(self.n_samples*self.n_params)\
                            .reshape((self.n_samples, self.n_params))
-            cum_rewards = {'+': [], '-': []}
             
-            # Run rollouts in each random direction
+            # Run 2*n rollouts in each random direction
+            cum_rewards = {'+': [], '-': []}
             for delta in delta_values:
                 param_vector = self.theta + delta*self.noise_sd
                 cum_reward = self.rollout(param_vector)
