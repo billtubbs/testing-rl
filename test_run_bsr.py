@@ -136,13 +136,13 @@ episode_count = 0
 # theta = np.array(best_params)
 theta = np.zeros((1, n_params))
 
-heading1 = f"{'j':>3s} {'ep.':>5s} {'theta':>32s} {'Reward':>8s}"
+heading1 = f"{'j':>3s} {'ep.':>5s} {'theta':>40s} {'Reward':>8s}"
 heading2 = '-'*len(heading1)
 print_and_log(heading1)
 print_and_log(heading2)
 
 j = 0
-n_iter = 10
+n_iter = 5
 done = False
 while not done:
 
@@ -171,7 +171,7 @@ while not done:
     # Print update to std. output
     if args.show:
         avg_cum_reward = 0.5*(cum_rewards['-'] + cum_rewards['+']).mean().round(2)
-        print_and_log(f"{j:3d} {episode_count:5d} {str(theta.round(2)):>32s} "
+        print_and_log(f"{j:3d} {episode_count:5d} {str(theta.round(2)):>40s} "
                       f"{avg_cum_reward:8.1f}")
 
     # Note, this is a good solution:
@@ -181,8 +181,8 @@ while not done:
     j += 1
     if j % n_iter == 0:
         while True:
-            s = input("Press enter to continue, 'r' to render, and "
-                      "'q' to quit: ").lower()
+            s = input("Press enter to continue, 'r' to render, 'e' to edit, "
+                      "and 'q' to quit: ").lower()
             if s == 'q':
                 done = True
                 break
@@ -192,6 +192,17 @@ while not done:
                 cum_reward = run_episode(env, model, render=args.render,
                                          show=args.verbose)
                 print_and_log(f"Reward: {round(cum_reward, 2)}")
+            elif s == 'e':
+                message = "Enter theta values seprated by commas: "
+                while True:
+                    try:
+                        x = np.fromstring(input(message), sep=',').reshape((1, n_params))
+                    except ValueError:
+                        print("Not understood, try again.")
+                    else:
+                        theta[:] = x
+                        break
+                print_and_log(f"theta: {theta.__repr__()}")
 
 # Close animation window
 env.close()
