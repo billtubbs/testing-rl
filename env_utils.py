@@ -2,6 +2,7 @@
 recording results.
 """
 
+import yaml
 import logging
 import logging.config
 import numpy as np
@@ -9,7 +10,9 @@ import gym
 import gym_CartPole_BT
 
 # Create logger based on config file
-logging.config.fileConfig(fname='logging.conf', disable_existing_loggers=False)
+with open('config.yaml', 'r') as f:
+    config = yaml.safe_load(f.read())
+    logging.config.dictConfig(config)
 logger = logging.getLogger(__name__)
 
 
