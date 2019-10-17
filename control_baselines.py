@@ -128,7 +128,7 @@ class LQRCartPend(LQR):
 
 
 class BasicRandomSearch:
-    """Basic random search algorithm.
+    """Basic random search (BRS) algorithm.
 
     A primitive form of random search which simply computes a finite 
     difference approximation along the random direction and then takes
@@ -137,7 +137,7 @@ class BasicRandomSearch:
     Refer to Mania et al. (2018) for details.
     """
 
-    def __init__(self, policy_params, rollout_func, step_size=0.1, 
+    def __init__(self, policy_params, rollout_func, step_size=0.25, 
                  n_samples=10, noise_sd=1, rng=None):
         """
         Args:
@@ -146,9 +146,8 @@ class BasicRandomSearch:
             rollout_func (function): Function that runs one roll-out in
                 the environment.
             step_size (float): step-size (alpha).
-            n_samples (int): Random search sample size (N).
-            noise_sd (float): Standard deviation of the exploration noise
-                (mu).
+            n_samples (int): Number of directions sampled per iteration (N).
+            noise_sd (float): Standard deviation of the exploration noise (mu).
             rng (np.random.RandomState): Initialized random number generator.
         """
 
@@ -168,12 +167,12 @@ class BasicRandomSearch:
 
         for _ in range(n_iter):
             
-            # Sample random directions from standard normal distribution
+            # Sample n random directions from standard normal distribution
             delta_values = self.rng.randn(self.n_samples*self.n_params)\
                            .reshape((self.n_samples, self.n_params))
-            cum_rewards = {'+': [], '-': []}
             
-            # Run rollouts in each random direction
+            # Run 2*n rollouts in each random direction
+            cum_rewards = {'+': [], '-': []}
             for delta in delta_values:
                 param_vector = self.theta + delta*self.noise_sd
                 cum_reward = self.rollout(param_vector)
@@ -192,3 +191,61 @@ class BasicRandomSearch:
             self.theta = self.theta + (self.step_size * dr_dtheta.sum(axis=0) / 
                                        self.n_samples)
 
+
+class AugmentedRandomSearch:
+    """Augmented random search (ARS) algorithm versions 1, 1-t, 2, and 2-t.
+
+    An augmented version of basic random search where the update
+    steps are scaling by the standard deviation of the rewards 
+    collected at each iteration.
+
+    Refer to Mania et al. (2018) for details.
+    """
+
+    def __init__(self, policy_params, rollout_func, step_size=0.25, 
+                 n_samples=10, noise_sd=1, b=None, rng=None):
+        """
+        Args:
+            policy_params (np.ndarray): 1-d array containing initial
+                values of the model parameters (can be zeros).
+            rollout_func (function): Function that runs one roll-out in
+                the environment.
+            step_size (float): step-size (alpha).
+            n_samples (int): Number of directions sampled per iteration (N).
+            noise_sd (float): Standard deviation of the exploration noise (mu).
+            b (int): Number of top-performing directions to use (b < N).
+                If b > N or b is None then b will be set to N.
+            rng (np.random.RandomState): Initialized random number generator.
+        """
+
+        super().__init__(policy_params, rollout_func, step_size=step_size, 
+                         n_samples=n_samples, noise_sd=noise_sd, rng=rng)
+        self.b = b
+
+    def search(self, n_iter=1):
+
+        for _ in range(n_iter):
+            
+            # Sample n random directions from standard normal distribution
+            delta_values = self.rng.randn(self.n_samples*self.n_params)\
+                           .reshape((self.n_samples, self.n_params))
+            
+            # Run 2*n rollouts in each random direction
+            cum_rewards = {'+': [], '-': []}
+            for delta in delta_values:
+                param_vector = self.theta + delta*self.noise_sd
+                cum_reward = self.rollout(param_vector)
+                self.rollout_count += 1
+                cum_rewards['+'].append(cum_reward)
+                param_vector = self.theta - delta*self.noise_sd
+                cum_reward = self.rollout(param_vector)
+                self.rollout_count += 1
+                cum_rewards['-'].append(cum_reward)
+
+            # Compute the finite difference approximation along the
+            # random direction and update model parameters
+            cum_rewards = {k: np.array(v) for k, v in cum_rewards.items()}
+            dr = cum_rewards['+'] - cum_rewards['-']
+            dr_dtheta = dr.reshape((self.n_samples, 1)) * delta_values     
+            self.theta = self.theta + (self.step_size * dr_dtheta.sum(axis=0) / 
+                                       self.n_samples)
