@@ -1,12 +1,16 @@
 import logging
 import numpy as np
 import control
+import gym
 from gym_CartPole_BT.systems import cartpend
 
 
 class LQR:
     """
     Linear quadratic Regulator (LQR) for use with Open AI Gym environments.
+
+    Follows the template for the BaseRLModel class in Stable Baselines.
+    See: https://stable-baselines.readthedocs.io/en/master/modules/base.html
 
     LQR uses a simple linear feedback controller and is commonly used in
     control engineering applications.
@@ -19,13 +23,16 @@ class LQR:
     :param env: (Gym environment) the environment to control.
     :param gain: (array) gain matrix (K) of the linear controller.
     :param verbose: (int) the verbosity level: 0 to 2.
-    :param requires_vec_env: For compatibility with Gym (Not used).
-    :param policy_base: For compatibility with Gym (Not used).
-    :param policy_kwargs: For compatibility with Gym (Not used).
+    :param requires_vec_env: For compatibility with Stable Baselines (Not used).
+    :param policy_base: For compatibility with Stable Baselines (Not used).
+    :param policy_kwargs: For compatibility with Stable Baselines (Not used).
+    :param seed: (int) For compatibility with Stable Baselines (Not used).
+    :param n_cpu_tf_sess: (int) For compatibility with Stable Baselines (Not used).
     """
 
     def __init__(self, policy, env, gain=None, verbose=0, *,
-                 requires_vec_env=False, policy_base=None, policy_kwargs=None):
+                 requires_vec_env=False, policy_base=None, policy_kwargs=None,
+                 seed=None, n_cpu_tf_sess=None):
         self.policy = policy
         self.env = env
         self.verbose = verbose
@@ -34,6 +41,7 @@ class LQR:
         self.requires_vec_env=False
         if env is not None:
             self.observation_space = env.observation_space
+            assert isinstance(env.action_space, gym.spaces.box.Box)
             self.action_space = env.action_space
             gain_matrix_shape = (
                 env.action_space.shape[0],
@@ -45,8 +53,12 @@ class LQR:
                 gain = np.array(gain, dtype=float)
                 assert gain.shape == gain_matrix_shape, "Gain matrix for " \
                     f"this environment should be shape {gain_matrix_shape}."
+            self.u = np.zeros(env.action_space.shape)  # Control vector
         self.gain = gain  # Gain matrix
-        self.u = np.zeros(env.action_space.shape)  # Control vector
+
+    def action_probability(self, observation, state=None, mask=None, actions=None, logp=False):
+
+        raise NotImplementedError()
 
     def get_env(self):
         """returns the current environment (can be None if not defined)
@@ -55,6 +67,15 @@ class LQR:
         """
         return self.env
 
+    def get_parameter_list(self):
+
+        return 
+
+    def get_parameters(self)
+
+        return
+
+
     def set_env(self, env):
         """Checks the validity of the environment, and if it is coherent,
         set it as the current environment.
@@ -62,12 +83,14 @@ class LQR:
         """
 
         # sanity checking the environment
+        assert isinstance(env.action_space, gym.spaces.box.Box), \
+            "Environment must have a continuous action-space."
         assert self.observation_space == env.observation_space, \
-            "Error: the environment passed must have the same observation " \
-            "space as this controller."
+            "Environment must have the same observation space " \
+            "as this controller."
         assert self.action_space == env.action_space, \
-            "Error: the environment passed must have the same action " \
-            "space as this controller."
+            "Environment must have the same action space as " \
+            "this controller."
 
         self.env = env
 
@@ -77,6 +100,14 @@ class LQR:
         self.u[:] = -np.dot(self.gain, observation - self.env.goal_state)
 
         return self.u, None
+    
+    set_random_seed(self, seed):
+
+        self.seed = seed
+
+    def setup_model(self):
+
+        raise NotImplementedError()
 
 
 class LQRCartPend(LQR):

@@ -10,7 +10,7 @@ from control_baselines import LQR
 
 # Parse any arguments provided at the command-line
 parser = argparse.ArgumentParser(description='Test this gym environment.')
-parser.add_argument('-e', '--env', type=str, default='CartPole-BT-vL-v0',
+parser.add_argument('-e', '--env', type=str, default='CartPole-v1',
                     help="gym environment")
 parser.add_argument('-s', "--show", help="display output to std output (screen).",
                     action="store_true")
@@ -53,9 +53,10 @@ def run_episode(env, model, render=True, show=True):
 
         # Determine control input
         u, _ = model.predict(obs)
+        action = 1 if u > 0 else 0  # Discrete actions for CartPole-v1 
 
         # Run simulation one time-step
-        obs, reward, done, info = env.step(u)
+        obs, reward, done, info = env.step(action)
 
         if render:
             # Update the animation
@@ -127,7 +128,9 @@ param_values = [np.linspace(v[0], v[1], v[2]) for i, v in range_data.items()]
 
 # Initialize linear model
 theta = np.zeros((1, n_params))
-model = LQR(None, env, theta)
+model = LQR(theta, env=None)
+model.observation_space = env.observation_space
+model.action_space = gym.spaces.box.Box(-np.nan, np.nan, dtype=np.float32)
 
 results_dir = 'results'
 if not os.path.exists(results_dir):
