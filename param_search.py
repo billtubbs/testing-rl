@@ -129,6 +129,7 @@ param_values = [np.linspace(v[0], v[1], v[2]) for i, v in range_data.items()]
 theta = np.zeros((1, n_params))
 model = LQR(None, env, theta)
 
+# Prepare output data file
 results_dir = 'results'
 if not os.path.exists(results_dir):
     os.makedirs(results_dir)

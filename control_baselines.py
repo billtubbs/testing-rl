@@ -3,8 +3,8 @@ import numpy as np
 import control
 import gym
 from gym_CartPole_BT.systems import cartpend
-from stablebaselines import  BasePolicy
-from stablebaselines.common import BaseRLModel
+#from stablebaselines import  BasePolicy
+#from stablebaselines.common import BaseRLModel
 
 
 class LQR:
@@ -73,9 +73,9 @@ class LQR:
 
         return self.gain.tolist()
 
-    def get_parameters(self)
+    def get_parameters(self):
 
-        return 
+        return self.gain
 
     def set_env(self, env):
         """Checks the validity of the environment, and if it is coherent,
@@ -102,7 +102,7 @@ class LQR:
 
         return self.u, None
     
-    set_random_seed(self, seed):
+    def set_random_seed(self, seed):
 
         self.seed = seed
 
