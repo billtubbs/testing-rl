@@ -15,6 +15,7 @@ log_filenames = {
     'log': 'log.out'
 }
 
+
 def survey_logs(results_dir, log_filenames=log_filenames,
                 recursively=True, verbose=1):
     """Looks at all folders in directory results_dir
@@ -47,6 +48,7 @@ def survey_logs(results_dir, log_filenames=log_filenames,
         print(f"{len(log_inventory)} log directories inventoried")
 
     return log_inventory
+
 
 def combine_log_data(log_dirs, log_filenames=log_filenames,
                      check_paths=True, update_paths=False,
@@ -155,7 +157,7 @@ def get_learning_data(log_dirs, file_reader=load_results, verbose=1):
 
     return learning_curves
 
-EPISODES_WINDOW = 100
+
 plot_colors = ['blue', 'green', 'red', 'cyan', 'magenta', 'yellow',
                'black', 'purple', 'pink', 'brown', 'orange', 'teal',
                'coral', 'lightblue', 'lime', 'lavender', 'turquoise',

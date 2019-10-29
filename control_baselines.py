@@ -1,4 +1,5 @@
 import logging
+from abc import ABC, abstractmethod
 import numpy as np
 import control
 import gym
@@ -159,7 +160,28 @@ class LQRCartPend(LQR):
         self.gain[:] = K
 
 
-class BasicRandomSearch:
+class GlobalSearchAlgorithm(ABC):
+    """Abstract class for policy search algorithm.
+    """
+    def __init__(self, policy_params, rollout_func):
+        self.theta = np.array(policy_params)
+        assert len(self.theta.shape) == 1
+        self.n_params = self.theta.shape[0]
+        self.rollout = rollout_func
+        """
+        Args:
+            policy_params (np.ndarray): 1-d array containing initial
+                values of the model parameters (can be zeros).
+            rollout_func (function): Function that runs one roll-out in
+                the environment.
+        """
+
+    @abstractmethod
+    def search(self, n_iter=1):
+        raise NotImplementedError
+
+
+class BasicRandomSearch(GlobalSearchAlgorithm):
     """Basic random search (BRS) algorithm.
 
     A primitive form of random search which simply computes a finite 
@@ -182,11 +204,7 @@ class BasicRandomSearch:
             noise_sd (float): Standard deviation of the exploration noise (mu).
             rng (np.random.RandomState): Initialized random number generator.
         """
-
-        self.theta = np.array(policy_params)
-        assert len(self.theta.shape) == 1
-        self.n_params = self.theta.shape[0]
-        self.rollout = rollout_func
+        super().__init__(policy_params, rollout_func)
         self.step_size = step_size
         self.n_samples = n_samples
         self.noise_sd = noise_sd
@@ -224,7 +242,7 @@ class BasicRandomSearch:
                                        self.n_samples)
 
 
-class AugmentedRandomSearch:
+class AugmentedRandomSearch(BasicRandomSearch):
     """Augmented random search (ARS) algorithm versions 1, 1-t, 2, and 2-t.
 
     An augmented version of basic random search where the update
@@ -249,7 +267,6 @@ class AugmentedRandomSearch:
                 If b > N or b is None then b will be set to N.
             rng (np.random.RandomState): Initialized random number generator.
         """
-
         super().__init__(policy_params, rollout_func, step_size=step_size, 
                          n_samples=n_samples, noise_sd=noise_sd, rng=rng)
         self.b = b
