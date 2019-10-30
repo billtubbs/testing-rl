@@ -48,6 +48,10 @@ parser.add_argument('-z', '--noise_sd', type=float, default=3.0,
                     help="standard deviation of the exploration noise")
 args = parser.parse_args()
 
+logging.info("-"*50)
+logging.info("RL Testing: Local Basic Random Search with Linear Policy")
+logging.info("-"*50)
+
 # Initialize random number generator
 rng = np.random.RandomState(args.seed)
 
