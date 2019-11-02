@@ -36,6 +36,10 @@ parser.add_argument('-n', '--n-repeats', type=int, default=5,
                     help="number of episodes (roll-outs) to average over.")
 args = parser.parse_args()
 
+logging.info("-"*50)
+logging.info("RL Testing: Bayesian Optimization with Linear Policy")
+logging.info("-"*50)
+
 # Initialize random number generator
 rng = np.random.RandomState(args.seed)
 
