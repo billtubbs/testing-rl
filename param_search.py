@@ -22,12 +22,10 @@ parser.add_argument('-v', "--verbose", help="increase output verbosity",
                     action="store_true")
 parser.add_argument('-n', '--n-repeats', type=int, default=3,
                     help="Number of episodes (roll-outs) to average over.")
-parser.add_argument('-t', '--n-samples', type=int, default=10,
-                    help="Number of directions sampled per iteration.")
 args = parser.parse_args()
 
 logging.basicConfig(filename='logfile.txt', filemode='w', level=logging.DEBUG,
-                    format='%(asctime)s %(message)s', 
+                    format='%(asctime)s %(message)s',
                     datefmt='%Y-%m-%d %H:%M:%S')
 
 
@@ -83,7 +81,7 @@ def run_episodes(env, model, n_repeats=1, render=True, show=True):
 
 
 def print_and_log(message):
-    if args.show: 
+    if args.show:
         print(message)
     if args.log:
         logging.info(message)
@@ -151,7 +149,7 @@ with open(filepath, 'w') as f:
     for i, idx in enumerate(np.ndindex(results.shape)):
         theta = [values[i] for i, values in zip(idx, param_values)]
         model.gain[:] = theta
-        cum_reward = run_episodes(env, model, n_repeats=args.n_repeats, 
+        cum_reward = run_episodes(env, model, n_repeats=args.n_repeats,
                                   render=False, show=False)
         results[idx] = cum_reward
 
