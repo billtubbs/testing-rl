@@ -19,7 +19,7 @@ from ray.tune import grid_search
 parser = argparse.ArgumentParser("Test run rllib model cartpole env")
 parser.add_argument('--num_iters', type=int, default=1000, metavar='N',
                     help="Total number of training iterations")
-parser.add_argument('--num_timesteps', type=int, default=10000, metavar='N',
+parser.add_argument('--num_timesteps', type=int, default=1e6, metavar='N',
                     help="Total number of timesteps to train for")
 parser.add_argument('--seed', type=int, default=None, metavar='S',
                     help='Initial seed for training')
@@ -54,7 +54,9 @@ config = {
                     'disturbances': 'low',
                     'initial_state': 'goal',
                     'initial_state_variance': None
-                }
+                },
+    "lr": tune.grid_search([0.01, 0.001, 0.0001, 0.00001]),
+    "eager": False
 }
 
 tune.run(
