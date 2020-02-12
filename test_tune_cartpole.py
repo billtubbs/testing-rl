@@ -5,6 +5,7 @@ This example shows:
 You can visualize experiment results in ~/ray_results using TensorBoard.
 """
 
+import argparse
 import numpy as np
 import gym
 from gym_CartPole_BT.envs.cartpole_bt_env import CartPoleBTEnv
@@ -12,6 +13,20 @@ import ray
 from ray import tune
 from ray.tune.registry import register_env
 from ray.tune import grid_search
+
+
+# Parse command-line arguments
+parser = argparse.ArgumentParser("Test run rllib model cartpole env")
+parser.add_argument('--num_iters', type=int, default=1000, metavar='N',
+                    help="Total number of training iterations")
+parser.add_argument('--num_timesteps', type=int, default=10000, metavar='N',
+                    help="Total number of timesteps to train for")
+parser.add_argument('--seed', type=int, default=None, metavar='S',
+                    help='Initial seed for training')
+parser.add_argument('--num_workers', type=int, default=2,
+                    help='Number of parallel workers')
+parser.add_argument('--num_gpus', type=int, default=0,
+                    help='Number of GPUs to use')
 
 
 def env_creator(env_config):
@@ -44,7 +59,7 @@ config = {
 tune.run(
     "PPO",
     stop={
-        "timesteps_total": 10000,
+        "timesteps_total": args.num_timesteps,
     },
     config=config,
     },

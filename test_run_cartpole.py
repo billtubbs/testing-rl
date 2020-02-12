@@ -22,8 +22,10 @@ from gym_CartPole_BT.envs.cartpole_bt_env import CartPoleBTEnv
 
 # Parse command-line arguments
 parser = argparse.ArgumentParser("Test run rllib model cartpole env")
-parser.add_argument('--n_iters', type=int, default=1000, metavar='N',
+parser.add_argument('--num_iters', type=int, default=1000, metavar='N',
                     help="Total number of training iterations")
+parser.add_argument('--num_timesteps', type=int, default=10000, metavar='N',
+                    help="Total number of timesteps to train for")
 parser.add_argument('--seed', type=int, default=None, metavar='S',
                     help='Initial seed for training')
 parser.add_argument('--num_workers', type=int, default=2,
@@ -61,7 +63,8 @@ config = {
 }
 
 stop = {
-    "training_iteration": args.n_iters
+    #"training_iteration": args.num_iters,
+    "timesteps_total": args.num_timesteps,
 }
 
 tune.run("PPO", config=config, stop=stop)
