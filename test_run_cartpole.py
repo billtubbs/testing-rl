@@ -32,7 +32,6 @@ parser.add_argument('--num_workers', type=int, default=2,
                     help='Number of parallel workers')
 parser.add_argument('--num_gpus', type=int, default=0,
                     help='Number of GPUs to use')
-
 args = parser.parse_args()
 
 
