@@ -53,7 +53,7 @@ config = {
                     'disturbances': 'low',
                     'initial_state': 'goal',
                     'initial_state_variance': None
-                },
+                }
 }
 
 tune.run(
@@ -61,6 +61,5 @@ tune.run(
     stop={
         "timesteps_total": args.num_timesteps,
     },
-    config=config,
-    },
+    config=config
 )
