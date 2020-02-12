@@ -4,5 +4,5 @@
 
 python -u ../test_tune_cartpole.py \
     --seed 1 \
-    --num_timesteps 10000 \
+    --num_timesteps 1000000 \
     --num_workers 46 \
