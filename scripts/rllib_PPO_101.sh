@@ -4,4 +4,5 @@
 
 python -u ../test_run_cartpole.py \
     --seed 101 \
-    --n_iters 1000
+    --num_timesteps 10000000 \
+    --num_workers 46
