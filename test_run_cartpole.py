@@ -34,6 +34,8 @@ parser.add_argument('--num_gpus', type=int, default=0,
                     help='Number of GPUs to use')
 parser.add_argument('--lr', type=float, default=0.0005,
                     help='Learning rate')
+parser.add_argument('--lr_schedule', type=str, default=None,
+                    help='Learning rate schedule')
 parser.add_argument('--kl_target', type=float, default=0.01,
                     help='Target value for KL divergence')
 args = parser.parse_args()
@@ -51,6 +53,7 @@ def env_creator(env_config):
 register_env("CartPole-BT-v0", env_creator)
 #trainer = ppo.PPOTrainer(env="CartPole-BT-v0")
 
+#TODO: Just pass all arbitrary args
 config = {
     "env": "CartPole-BT-v0",
     "seed": args.seed,
@@ -64,6 +67,7 @@ config = {
                     'initial_state_variance': None
                 },
     "lr": args.lr,
+    "lr_schedule": eval(args.lr_schedule),
     "kl_target": args.kl_target,
 }
 
