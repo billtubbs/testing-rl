@@ -19,7 +19,7 @@ from ray.tune import grid_search
 parser = argparse.ArgumentParser("Test run rllib model cartpole env")
 parser.add_argument('--num_iters', type=int, default=1000, metavar='N',
                     help="Total number of training iterations")
-parser.add_argument('--num_timesteps', type=int, default=1e6, metavar='N',
+parser.add_argument('--num_timesteps', type=int, default=10000, metavar='N',
                     help="Total number of timesteps to train for")
 parser.add_argument('--seed', type=int, default=None, metavar='S',
                     help='Initial seed for training')
@@ -27,6 +27,15 @@ parser.add_argument('--num_workers', type=int, default=2,
                     help='Number of parallel workers')
 parser.add_argument('--num_gpus', type=int, default=0,
                     help='Number of GPUs to use')
+parser.add_argument('--run', type=str, default="PPO",
+                    help="Algorithm name (SAC, PPO, PG, A2C, A3C, IMPALA, "
+                         "ES, DDPG, DQN, MARWIL, APEX, or APEX_DDPG)")
+parser.add_argument('--lr', type=float, default=0.0005,
+                    help='Learning rate')
+parser.add_argument('--lr_schedule', type=str, default=None,
+                    help='Learning rate schedule')
+parser.add_argument('--kl_target', type=float, default=0.01,
+                    help='Target value for KL divergence (PPO)')
 args = parser.parse_args()
 
 
@@ -55,7 +64,7 @@ config = {
                     'initial_state': 'goal',
                     'initial_state_variance': None
                 },
-    "lr": tune.grid_search([0.01, 0.001, 0.0001, 0.00001]),
+    "lr": tune.grid_search((0.01, 0.001, 0.0001, 0.00001)),
     "eager": False
 }
 

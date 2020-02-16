@@ -22,7 +22,7 @@ from gym_CartPole_BT.envs.cartpole_bt_env import CartPoleBTEnv
 
 # Parse command-line arguments
 parser = argparse.ArgumentParser("Test run rllib model cartpole env")
-parser.add_argument('--num_iters', type=int, default=1000, metavar='N',
+parser.add_argument('--num_iters', type=int, default=10, metavar='N',
                     help="Total number of training iterations")
 parser.add_argument('--num_timesteps', type=int, default=10000, metavar='N',
                     help="Total number of timesteps to train for")
@@ -32,12 +32,15 @@ parser.add_argument('--num_workers', type=int, default=2,
                     help='Number of parallel workers')
 parser.add_argument('--num_gpus', type=int, default=0,
                     help='Number of GPUs to use')
+parser.add_argument('--run', type=str, default="PPO",
+                    help="Algorithm name (SAC, PPO, PG, A2C, A3C, IMPALA, "
+                         "ES, DDPG, DQN, MARWIL, APEX, or APEX_DDPG)")
 parser.add_argument('--lr', type=float, default=0.0005,
                     help='Learning rate')
 parser.add_argument('--lr_schedule', type=str, default=None,
                     help='Learning rate schedule')
 parser.add_argument('--kl_target', type=float, default=0.01,
-                    help='Target value for KL divergence')
+                    help='Target value for KL divergence (PPO)')
 args = parser.parse_args()
 
 
@@ -51,7 +54,6 @@ def env_creator(env_config):
     )
 
 register_env("CartPole-BT-v0", env_creator)
-#trainer = ppo.PPOTrainer(env="CartPole-BT-v0")
 
 #TODO: Just pass all arbitrary args
 config = {
@@ -66,14 +68,16 @@ config = {
                     'initial_state': 'goal',
                     'initial_state_variance': None
                 },
-    "lr": args.lr,
-    "lr_schedule": eval(args.lr_schedule),
-    "kl_target": args.kl_target,
+    "lr": args.lr
 }
+if args.run == "PPO":
+    config["kl_target"] = args.kl_target
+if args.lr_schedule is not None:
+    config["lr_schedule"] = eval(args.lr_schedule)
 
 stop = {
-    #"training_iteration": args.num_iters,
+    "training_iteration": args.num_iters,
     "timesteps_total": args.num_timesteps,
 }
 
-tune.run("PPO", config=config, stop=stop)
+tune.run(args.run, config=config, stop=stop)
