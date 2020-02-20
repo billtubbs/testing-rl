@@ -3,6 +3,9 @@ This example shows:
   - using a custom environment
   - using Tune for grid search
 You can visualize experiment results in ~/ray_results using TensorBoard.
+
+Advice on PPO tuning parameters:
+https://medium.com/aureliantactics/ppo-hyperparameters-and-ranges-6fc2d29bccbe
 """
 
 import argparse
