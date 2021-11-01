@@ -77,9 +77,10 @@ kf_gain = np.array([
 
 # Controller gain matrix (K) for optimal control:
 # (Calculated using lqr function with Q=np.eye(4), and R=0.01**2)
-#lqr_gain = np.array([[ -3.1623, -13.1358, 212.228 ,  90.7702]])
-# Faster controller:
 lqr_gain = np.array([[-100.    , -197.5366, 1491.2808,  668.4449]])
+# Slower controller:
+# (Calculated using lqr function with Q=np.diag([1, 5, 10, 10]), and R=0.1)
+#lqr_gain = np.array([[ -3.1623, -13.1358, 212.228 ,  90.7702]])
 
 if args.show:
     print(f"{env.time_step:3d}: {np.array2string(x.T, precision=1, suppress_small=True):>27s} "
@@ -91,7 +92,7 @@ done = False
 while not done:
 
     # Compute LQR control action:
-    # u[t] = -Ky[t]
+    # u[t] = -Kx[t]
     u[:] = -lqr_gain @ x_est
 
     # Output measurement
@@ -118,9 +119,6 @@ while not done:
         print(f"{env.time_step:3d}: {np.array2string(x.T, precision=1, suppress_small=True):>27s} "
               f"{np.array2string(x_est.T, precision=1, suppress_small=True):>27s} "
               f"{u[0]:5.1f} {reward:6.2f} {cum_reward:10.1f}")
-
-    if (np.abs(env.state[2] - np.pi) > 1) or (np.abs(env.state[3]) > 2):
-        done = True
 
 if args.render:
     input("Press enter to close animation window")
