@@ -14,6 +14,10 @@ logger = logging.getLogger(__name__)
 
 
 def simulation_rollout(env, model, n_steps=None, log=True, render=False):
+    """Returns a list of tuples containing the (observation, 
+     action, reward) at each timestep of one simulated 
+     trajectory (i.e. rollout).
+    """
 
     observation = env.reset()
 
@@ -61,6 +65,10 @@ def simulation_rollout(env, model, n_steps=None, log=True, render=False):
 
 
 def simulation_rollouts(env, model, n_steps=None, n_repeats=1, log=True, render=False):
+    """Returns a list of tuples containing the (observation, 
+     action, reward) at each timestep of one simulated 
+     trajectory (i.e. rollout).
+    """
 
     assert len(env.observation_space.shape) == 1, \
         "Environment must have 1-dim observation space."

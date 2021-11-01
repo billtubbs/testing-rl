@@ -48,18 +48,17 @@ class LQR:
             self.action_space = env.action_space
             gain_matrix_shape = (
                 env.action_space.shape[0],
-                env.observation_space.shape[0]
+                env.initial_state.shape[0]
             )
             if gain is None:
-                gain = np.zeros(gain_matrix_shape, dtype=float)
+                gain = np.zeros(gain_matrix_shape, dtype='float32')
             else:
-                gain = np.array(gain, dtype=float)
-                assert gain.shape == gain_matrix_shape, "Gain matrix for " \
-                    f"this environment should be shape {gain_matrix_shape}."
+                gain = np.array(gain, dtype='float32')
             self.u = np.zeros(env.action_space.shape)  # Control vector
-        self.gain = gain  # Gain matrix
+        self.gain = np.array(gain)  # Gain matrix
 
-    def action_probability(self, observation, state=None, mask=None, actions=None, logp=False):
+    def action_probability(self, observation, state=None, mask=None, actions=None, 
+                           logp=False):
 
         raise NotImplementedError()
 
@@ -114,19 +113,19 @@ class LQR:
 
 class LQRCartPend(LQR):
 
-    def __init__(self, policy, env, gain=None, verbose=0,
-                 _init_setup_model=True):
-
+    def __init__(self, policy, env, gain=None, verbose=0):
         super().__init__(policy, env, gain=gain, verbose=verbose,
                          requires_vec_env=False, policy_base=None)
-
-        # State-space system parameters
-        self.A = None
-        self.B = None
-        self.Q = None
-        self.R = None
-        if self.env is not None and _init_setup_model:
-            self.setup_model()
+        self.setup_model()
+        if gain is not None:
+            gain_matrix_shape = (
+                env.action_space.shape[0],
+                env.initial_state.shape[0]
+            )
+            assert gain.shape == gain_matrix_shape, "Gain matrix for " \
+                f"this environment should be shape {gain_matrix_shape}."
+        else:
+            self.calc_lqr_gain()
 
     def setup_model(self):
 
@@ -139,15 +138,22 @@ class LQRCartPend(LQR):
         goal_state = self.env.goal_state
 
         # Determine which fixed point to linearize at
-        if np.array_equal(goal_state, np.array([0.0, 0.0, np.pi, 0.0])):
+        pend_up_state = np.array([0.0, 0.0, np.pi, 0.0], dtype='float32')
+        pend_down_state = np.array([0.0, 0.0, 0.0, 0.0], dtype='float32')
+        if np.array_equal(goal_state, pend_up_state):
             s = 1
-        elif np.array_equal(goal_state, np.array([0.0, 0.0, 0.0, 0.0])):
+        elif np.array_equal(goal_state, pend_down_state):
             s = -1
         else:
             raise ValueError("Linearizing at this goal state is not allowed.")
 
         # Calculate system and control matrices
         self.A, self.B = cartpend.cartpend_ss(m=m, M=M, L=L, g=g, d=d, s=s)
+        self.C = self.env.output_matrix
+        ny = self.C.shape[0]
+        self.D = np.zeros((ny, 1), dtype='float32')
+
+    def calc_lqr_gain(self):
 
         # Choose state and input weights for cost function
         self.Q = np.eye(4)
@@ -158,6 +164,83 @@ class LQRCartPend(LQR):
 
         # Set gain matrix
         self.gain[:] = K
+
+    def predict(self, observation, state=None, mask=None, deterministic=True):
+
+        observation = np.array(observation)
+        self.u[:] = -np.dot(self.gain, observation - self.env.goal_state)
+
+        return self.u, None
+
+
+class LQGCartPend(LQRCartPend):
+
+    def __init__(self, policy, env, gain=None, kf_gain=None, 
+                 verbose=0, _init_setup_model=True):
+
+        super().__init__(policy, env, gain=gain, verbose=verbose)
+
+        # Kalman filter gain matrix
+        self.kf_gain = kf_gain
+        self.kf_params = None
+        if self.kf_gain is None:
+            self.setup_KF()
+        self.x_est = (self.env.initial_state - 
+                      self.env.goal_state).reshape(4, 1)
+
+    def setup_KF(self):
+
+        # Derive the optimal controller (LQR).
+        # This sets self.A, self.B, self.Q, self.R and self.gain
+        super().setup_model()
+
+        # Construct continuous-time linear model
+        Gcss = control.ss(self.A, self.B, self.C, self.D)
+
+        # Convert to discrete-time model
+        Gdss = control.c2d(Gcss, self.env.tau)
+        A = Gdss.A
+        B = Gdss.B
+        C = Gdss.C
+        D = Gdss.D
+
+        # Choose KF parameters: process noise covariance 
+        # matrix and output measurement noise covariance matrix
+        Q = 0.1**2 * np.eye(4)
+        R = 0.001**2 * np.eye(2)
+
+        # Calculate discrete-time Kalman filter gain and state
+        # estimation error covariance matrix (P)
+        X, L, G = control.dare(A.T, C.T, Q, R)
+        P = X.T
+        self.kf_gain = G.T
+        self.kf_params = {
+            'A': A,
+            'B': B,
+            'C': C,
+            'D': D,
+            'Q': Q,
+            'R': R,
+            'P': P,
+            'L': L
+        }
+        breakpoint()
+
+    def predict(self, observation, state=None, mask=None, deterministic=True):
+
+        # Compute LQR control action:
+        # u[t] = -Ky[t]
+        self.u[:] = -self.gain @ self.x_est
+
+        # Output measurement
+        observation = np.array(observation)
+        ym = observation.reshape(2, 1) - self.C @ self.env.goal_state.reshape(4, 1)
+
+        # Update Kalman filter state estimates
+        error = ym - self.C @ self.x_est
+        self.x_est = self.A @ self.x_est + self.B @ self.u.reshape(-1, 1) + self.kf_gain @ error
+
+        return self.u, None
 
 
 class GlobalSearchAlgorithm(ABC):
