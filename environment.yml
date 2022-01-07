@@ -1,0 +1,31 @@
+name: torch
+channels:
+- anaconda
+- conda-forge
+dependencies:
+  - numpy
+  - scipy
+  - statsmodels
+  - matplotlib
+  - sympy
+  - pandas
+  - pytorch
+  - torchvision
+  - scikit-learn
+  - control
+  - slycot
+  - seaborn
+  - dask
+  - pip
+  - pyyaml
+  - sqlite
+  - pillow
+  - xlrd
+  - ipython
+  - ipykernel
+  - flask
+
+# Other installs:
+# pip install ray
+# pip install gekko
+# pip install gym

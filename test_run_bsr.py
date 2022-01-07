@@ -3,7 +3,6 @@ import os
 import logging
 import logging.config
 import yaml
-import csv
 import datetime
 import numpy as np
 import pandas as pd
